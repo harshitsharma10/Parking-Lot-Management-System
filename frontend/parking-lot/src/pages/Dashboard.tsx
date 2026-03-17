@@ -31,9 +31,8 @@ export default function Dashboard() {
   return (
     <div className="max-w-2xl mx-auto py-12 px-4">
 
-      {/* Header */}
       <div className="mb-12">
-        <p className="text-white/20 font-mono text-xs tracking-widest uppercase mb-3">
+        <p className="text-white/40 font-mono text-xs tracking-widest uppercase mb-3">
           Welcome back
         </p>
         <h1 className="text-white text-4xl font-light">
@@ -42,7 +41,7 @@ export default function Dashboard() {
         <div className="w-12 h-px bg-[#e8ff47] mt-4" />
       </div>
 
-      {/* Action cards */}
+    
       <div className="space-y-3">
         {userActions.map(action => (
           <Link
@@ -62,7 +61,7 @@ export default function Dashboard() {
               </div>
               <p className="text-white/30 text-sm font-mono">{action.sub}</p>
             </div>
-            <span className="text-white/20 group-hover:text-white/60 text-xl transition-colors">
+            <span className="text-white/40 group-hover:text-white/60 text-xl transition-colors">
               →
             </span>
           </Link>

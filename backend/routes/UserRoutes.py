@@ -39,6 +39,18 @@ def login_user(
 
 @router.get("/me")
 def get_me(current_user: Annotated[dict, Depends(get_current_user)]):
-    return current_user  # returns { username, id, role }
+    return current_user  
 
-
+@router.post("/logout", status_code=status.HTTP_200_OK)
+def logout_user(
+    response: Response,
+    _: Annotated[dict, Depends(get_current_user)]
+):
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        samesite="none",
+        secure=False,
+        path="/",
+    )
+    return {"message": "Logged out successfully"}

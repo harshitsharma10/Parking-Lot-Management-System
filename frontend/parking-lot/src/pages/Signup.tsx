@@ -29,7 +29,6 @@ export default function Signup() {
   return (
     <div className="min-h-screen bg-[#0f0f0f] flex">
 
-      {/* Left panel */}
       <div className="hidden lg:flex w-1/2 flex-col justify-between p-16 border-r border-white/10">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-[#e8ff47] rounded-sm" />
@@ -49,7 +48,6 @@ export default function Signup() {
           </p>
         </div>
 
-        {/* Decorative slot grid */}
         <div className="grid grid-cols-6 gap-1.5">
           {Array.from({ length: 18 }).map((_, i) => (
             <div
@@ -64,7 +62,6 @@ export default function Signup() {
         </div>
       </div>
 
-      {/* Right panel — form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-sm">
 

@@ -38,7 +38,10 @@ export default function MySessions() {
   const handleExit = async (sessionId: number) => {
     setExiting(sessionId)
     try {
-      await api.post(`/parking/exit/${sessionId}`)
+      const res = await api.post(`/parking/exit/${sessionId}`)
+      if (res.data.warning) {
+        alert(res.data.warning)   
+      }
       await fetchSessions()
     } catch (err: any) {
       alert(err.response?.data?.detail ?? 'Exit failed')
@@ -83,7 +86,6 @@ export default function MySessions() {
               key={session.id}
               className="bg-white/3 border border-white/8 rounded-xl p-5"
             >
-              {/* Top row */}
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <div className="flex items-center gap-3 mb-1">
@@ -113,7 +115,6 @@ export default function MySessions() {
                 )}
               </div>
 
-              {/* Time info */}
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div>
                   <p className="text-white/20 text-[10px] font-mono uppercase tracking-widest mb-1">Entry</p>
@@ -133,10 +134,9 @@ export default function MySessions() {
                 )}
               </div>
 
-              {/* Actions */}
               <div className="flex gap-2">
                 <button
-                  onClick={() => navigate(`/ticket/${session.id}`)}
+                  onClick={() => navigate(`/ticket/${session.id}?from=user`)}
                   className="text-xs font-mono tracking-widest uppercase px-4 py-2 rounded-lg
                              bg-white/5 border border-white/10 text-white/40
                              hover:border-white/20 hover:text-white/70 transition-all"

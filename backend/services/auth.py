@@ -46,7 +46,3 @@ def login_user(db: Session, user_req: UserLogin):
     )
 
     return access_token
-
-# raise HTTPException(status_code=404, detail="User not found!")
-
-# raise HTTPException(status_code=401, detail='Invalid credentials')

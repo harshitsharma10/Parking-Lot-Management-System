@@ -10,7 +10,7 @@ function formatTime(iso: string) {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between items-center">
-      <span className="text-white/30 text-xs font-mono uppercase tracking-widest">{label}</span>
+      <span className="text-white text-xs font-mono uppercase tracking-widest">{label}</span>
       <span className="text-white text-sm font-mono">{value}</span>
     </div>
   )
@@ -20,10 +20,8 @@ export default function TicketCard({ ticket }: { ticket: Ticket }) {
   return (
     <div className="w-full max-w-sm mx-auto">
 
-      {/* Card */}
       <div className="bg-[#161616] border border-white/10 rounded-2xl overflow-hidden">
 
-        {/* Header */}
         <div className="px-6 pt-6 pb-5 border-b border-white/8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -33,25 +31,23 @@ export default function TicketCard({ ticket }: { ticket: Ticket }) {
             <span className={`text-[10px] font-mono px-2 py-1 rounded-full
               ${ticket.status === 'ACTIVE'
                 ? 'bg-[#e8ff47] text-[#0f0f0f] font-bold'
-                : 'bg-white/10 text-white/40'
+                : 'bg-white/10 text-white'
               }`}>
               {ticket.status}
             </span>
           </div>
-          <p className="text-white/20 font-mono text-xs tracking-widest">{ticket.ticket_id}</p>
+          <p className="text-white font-mono text-xs tracking-widest">{ticket.ticket_id}</p>
           <p className="text-white text-3xl font-light mt-1 tracking-widest">
             {ticket.vehicle_number}
           </p>
         </div>
 
-        {/* Tear line */}
         <div className="relative flex items-center py-0">
           <div className="w-4 h-4 bg-[#0f0f0f] rounded-full absolute -left-2 border-r border-white/10" />
           <div className="flex-1 border-t border-dashed border-white/10 mx-6" />
           <div className="w-4 h-4 bg-[#0f0f0f] rounded-full absolute -right-2 border-l border-white/10" />
         </div>
 
-        {/* Details */}
         <div className="px-6 py-5 space-y-3">
           <Row label="Type" value={`${ticket.vehicle_type} · ${ticket.parking_type}`} />
           <Row label="Slot" value={ticket.slot_number} />
@@ -71,16 +67,14 @@ export default function TicketCard({ ticket }: { ticket: Ticket }) {
           )}
         </div>
 
-        {/* Tear line */}
         <div className="relative flex items-center py-0">
           <div className="w-4 h-4 bg-[#0f0f0f] rounded-full absolute -left-2 border-r border-white/10" />
           <div className="flex-1 border-t border-dashed border-white/10 mx-6" />
           <div className="w-4 h-4 bg-[#0f0f0f] rounded-full absolute -right-2 border-l border-white/10" />
         </div>
 
-        {/* Footer — amount */}
         <div className="px-6 py-5 flex justify-between items-center">
-          <span className="text-white/30 text-xs font-mono uppercase tracking-widest">
+          <span className="text-white text-xs font-mono uppercase tracking-widest">
             {ticket.status === 'ACTIVE' ? 'Estimated' : 'Amount Charged'}
           </span>
           <span className="text-[#e8ff47] text-3xl font-light">

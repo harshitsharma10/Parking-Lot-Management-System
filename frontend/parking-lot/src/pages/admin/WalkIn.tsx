@@ -16,7 +16,6 @@ export default function WalkIn() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
-  // Fetch available dynamic slots for the dropdown
   useEffect(() => {
     const fetchSlots = async () => {
       try {
@@ -26,7 +25,6 @@ export default function WalkIn() {
         )
         setSlots(available)
       } catch {
-        // handle silently
       }
     }
     fetchSlots()
@@ -55,15 +53,14 @@ export default function WalkIn() {
   return (
     <div className="max-w-md mx-auto py-12 px-4">
 
-      {/* Header */}
       <div className="mb-10">
         <Link
           to="/admin/slots"
-          className="text-white/20 hover:text-white/50 font-mono text-xs tracking-widest uppercase transition-colors"
+          className="text-white hover:text-white/50 font-mono text-xs tracking-widest uppercase transition-colors"
         >
           ← Slot Manager
         </Link>
-        <p className="text-white/20 font-mono text-xs tracking-widest uppercase mt-6 mb-3">
+        <p className="text-white font-mono text-xs tracking-widest uppercase mt-6 mb-3">
           Admin · Dynamic pool
         </p>
         <h1 className="text-white text-4xl font-light">Walk-in Entry</h1>
@@ -72,9 +69,8 @@ export default function WalkIn() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
 
-        {/* Vehicle number */}
         <div>
-          <label className="block text-white/40 text-xs font-mono tracking-widest uppercase mb-2">
+          <label className="block text-white text-xs font-mono tracking-widest uppercase mb-2">
             Vehicle Number
           </label>
           <input
@@ -89,9 +85,8 @@ export default function WalkIn() {
           />
         </div>
 
-        {/* Vehicle type */}
         <div>
-          <label className="block text-white/40 text-xs font-mono tracking-widest uppercase mb-3">
+          <label className="block text-white text-xs font-mono tracking-widest uppercase mb-3">
             Vehicle Type
           </label>
           <div className="grid grid-cols-3 gap-2">
@@ -103,7 +98,7 @@ export default function WalkIn() {
                 className={`py-3 rounded-lg text-xs font-mono tracking-widest uppercase transition-all
                   ${form.vehicle_type === type
                     ? 'bg-[#e8ff47] text-[#0f0f0f] font-bold'
-                    : 'bg-white/5 border border-white/10 text-white/40 hover:border-white/20 hover:text-white/70'
+                    : 'bg-white/5 border border-white/10 text-white hover:border-white/20 hover:text-white/70'
                   }`}
               >
                 {type}
@@ -112,11 +107,10 @@ export default function WalkIn() {
           </div>
         </div>
 
-        {/* Slot selection (optional) */}
         <div>
-          <label className="block text-white/40 text-xs font-mono tracking-widest uppercase mb-2">
+          <label className="block text-white text-xs font-mono tracking-widest uppercase mb-2">
             Specific Slot
-            <span className="text-white/20 ml-2 normal-case tracking-normal">(optional — auto-assigns if empty)</span>
+            <span className="text-white ml-2 normal-case tracking-normal">(optional — auto-assigns if empty)</span>
           </label>
           <select
             value={form.slot_id ?? ''}
@@ -136,16 +130,15 @@ export default function WalkIn() {
             ))}
           </select>
           {slots.length === 0 && (
-            <p className="text-white/20 text-xs font-mono mt-2">
+            <p className="text-white text-xs font-mono mt-2">
               No dynamic slots available right now
             </p>
           )}
         </div>
 
-        {/* Info note */}
         <div className="flex gap-3 bg-white/3 border border-white/8 rounded-lg px-4 py-3">
           <span className="w-1 h-1 bg-[#e8ff47] rounded-full mt-1.5 shrink-0" />
-          <p className="text-white/30 text-xs font-mono leading-relaxed">
+          <p className="text-white text-xs font-mono leading-relaxed">
             Walk-in vehicles are assigned to the dynamic pool. No user account required. Slot is marked occupied immediately.
           </p>
         </div>

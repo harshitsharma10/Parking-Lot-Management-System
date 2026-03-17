@@ -17,8 +17,7 @@ export default function Login() {
     setLoading(true)
     try {
       await api.post('/auth/login', { email, password })
-      // Decode role from a /me endpoint or store from response
-      // For now we fetch user info after login
+
       const res = await api.get('/auth/me')
       login(res.data)
       navigate(res.data.role === 'admin' ? '/admin/slots' : '/dashboard')
@@ -32,7 +31,6 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-[#0f0f0f] flex">
 
-      {/* Left panel — branding */}
       <div className="hidden lg:flex w-1/2 flex-col justify-between p-16 border-r border-white/10">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-[#e8ff47] rounded-sm" />
@@ -40,7 +38,7 @@ export default function Login() {
         </div>
 
         <div>
-          <p className="text-white/20 font-mono text-xs tracking-widest uppercase mb-8">
+          <p className="text-white/40 font-mono text-xs tracking-widest uppercase mb-8">
             Slot Management System
           </p>
           <h1 className="text-white text-6xl font-light leading-none tracking-tight mb-6">
@@ -48,7 +46,7 @@ export default function Login() {
             <span className="text-[#e8ff47]">Parking</span><br />
             Infrastructure
           </h1>
-          <p className="text-white/40 text-sm leading-relaxed max-w-xs font-light">
+          <p className="text-white/60 text-sm leading-relaxed max-w-xs font-light">
             Lane-based queue allocation with real-time slot tracking and automated billing.
           </p>
         </div>
@@ -63,11 +61,9 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Right panel — form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-sm">
 
-          {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-12 lg:hidden">
             <div className="w-7 h-7 bg-[#e8ff47] rounded-sm" />
             <span className="text-white font-mono text-sm tracking-[0.2em] uppercase">ParkOS</span>
@@ -80,7 +76,7 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-white/40 text-xs font-mono tracking-widest uppercase mb-2">
+              <label className="block text-white/60 text-xs font-mono tracking-widest uppercase mb-2">
                 Email
               </label>
               <input
@@ -96,7 +92,7 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="block text-white/40 text-xs font-mono tracking-widest uppercase mb-2">
+              <label className="block text-white/60 text-xs font-mono tracking-widest uppercase mb-2">
                 Password
               </label>
               <input
@@ -131,7 +127,7 @@ export default function Login() {
             </button>
           </form>
 
-          <p className="text-white/20 text-xs font-mono text-center mt-8">
+          <p className="text-white/40 text-xs font-mono text-center mt-8">
             No account?{' '}
             <Link to="/signup" className="text-[#e8ff47]/70 hover:text-[#e8ff47] transition-colors">
               Create one

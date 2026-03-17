@@ -1,4 +1,3 @@
-// src/context/AuthContext.tsx
 import { createContext, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { User } from '../types'
@@ -13,19 +12,19 @@ const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
-    // ← this runs once on load, restores user from localStorage
+   
     const stored = localStorage.getItem('park_user')
     return stored ? JSON.parse(stored) : null
   })
 
   const login = (userData: User) => {
     setUser(userData)
-    localStorage.setItem('park_user', JSON.stringify(userData))  // ← persist
+    localStorage.setItem('park_user', JSON.stringify(userData))  
   }
 
   const logout = () => {
     setUser(null)
-    localStorage.removeItem('park_user')  // ← clear on logout
+    localStorage.removeItem('park_user') 
   }
 
   return (

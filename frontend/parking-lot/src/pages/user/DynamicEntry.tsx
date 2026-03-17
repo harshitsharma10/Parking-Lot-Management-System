@@ -34,10 +34,10 @@ export default function DynamicEntry() {
     <div className="max-w-md mx-auto py-12 px-4">
 
       <div className="mb-10">
-        <Link to="/dashboard" className="text-white/20 hover:text-white/50 font-mono text-xs tracking-widest uppercase transition-colors">
+        <Link to="/dashboard" className="text-white hover:text-white/50 font-mono text-xs tracking-widest uppercase transition-colors">
           ← Back
         </Link>
-        <p className="text-white/20 font-mono text-xs tracking-widest uppercase mt-6 mb-3">
+        <p className="text-white font-mono text-xs tracking-widest uppercase mt-6 mb-3">
           Mall-style parking
         </p>
         <h1 className="text-white text-4xl font-light">Dynamic Entry</h1>
@@ -46,9 +46,8 @@ export default function DynamicEntry() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
 
-        {/* Vehicle number */}
         <div>
-          <label className="block text-white/40 text-xs font-mono tracking-widest uppercase mb-2">
+          <label className="block text-white text-xs font-mono tracking-widest uppercase mb-2">
             Vehicle Number
           </label>
           <input
@@ -63,9 +62,8 @@ export default function DynamicEntry() {
           />
         </div>
 
-        {/* Vehicle type */}
         <div>
-          <label className="block text-white/40 text-xs font-mono tracking-widest uppercase mb-3">
+          <label className="block text-white text-xs font-mono tracking-widest uppercase mb-3">
             Vehicle Type
           </label>
           <div className="grid grid-cols-3 gap-2">
@@ -77,7 +75,7 @@ export default function DynamicEntry() {
                 className={`py-3 rounded-lg text-xs font-mono tracking-widest uppercase transition-all
                   ${form.vehicle_type === type
                     ? 'bg-[#e8ff47] text-[#0f0f0f] font-bold'
-                    : 'bg-white/5 border border-white/10 text-white/40 hover:border-white/20 hover:text-white/70'
+                    : 'bg-white/5 border border-white/10 text-white hover:border-white/20 hover:text-white/70'
                   }`}
               >
                 {type}

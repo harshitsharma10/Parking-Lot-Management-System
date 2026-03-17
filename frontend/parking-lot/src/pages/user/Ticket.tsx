@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import api from '../../api/axios'
 import TicketCard from '../../components/TicketCard'
 import type { Ticket } from '../../types'
@@ -9,6 +9,11 @@ export default function TicketPage() {
   const [ticket, setTicket] = useState<Ticket | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [searchParams] = useSearchParams()
+  const from = searchParams.get('from')
+
+  const backLink = from === 'admin' ? '/admin/sessions' : '/my-sessions'
+  const backLabel = from === 'admin' ? '← Active Sessions' : '← My Sessions'
 
   useEffect(() => {
     const fetchTicket = async () => {
@@ -36,7 +41,7 @@ export default function TicketPage() {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4">
         <p className="text-red-400 font-mono text-sm">{error}</p>
-        <Link to="/my-sessions" className="text-[#e8ff47]/60 hover:text-[#e8ff47] font-mono text-xs uppercase tracking-widest transition-colors">
+        <Link to={backLink} className="text-[#e8ff47]/60 hover:text-[#e8ff47] font-mono text-xs uppercase tracking-widest transition-colors">
           ← Back to sessions
         </Link>
       </div>
@@ -48,16 +53,15 @@ export default function TicketPage() {
 
       <div className="mb-8">
         <Link
-          to="/my-sessions"
+          to={backLink}
           className="text-white/20 hover:text-white/50 font-mono text-xs tracking-widest uppercase transition-colors"
         >
-          ← My Sessions
+          {backLabel}
         </Link>
       </div>
 
       <TicketCard ticket={ticket} />
 
-      {/* Print hint */}
       <p className="text-center text-white/15 font-mono text-xs mt-6 tracking-widest uppercase">
         {ticket.status === 'ACTIVE' ? 'Session in progress' : 'Thank you for parking with us'}
       </p>

@@ -1,60 +1,68 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import api from '../../api/axios'
-import type { ParkingSession } from '../../types'
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import api from "../../api/axios";
+import type { ParkingSession } from "../../types";
 
 function formatTime(iso: string) {
-  return new Date(iso).toLocaleString('en-IN', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  })
+  return new Date(iso).toLocaleString("en-IN", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
 }
 
 export default function ActiveSessions() {
-  const [sessions, setSessions] = useState<ParkingSession[]>([])
-  const [loading, setLoading] = useState(true)
-  const [exiting, setExiting] = useState<number | null>(null)
-  const navigate = useNavigate()
+  const [sessions, setSessions] = useState<ParkingSession[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [exiting, setExiting] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   const fetchSessions = async () => {
     try {
-      const res = await api.get('/admin/sessions')
-      setSessions(res.data)
+      const res = await api.get("/admin/sessions");
+      setSessions(res.data);
     } catch {
-      // handle silently
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  useEffect(() => { fetchSessions() }, [])
+  useEffect(() => {
+    fetchSessions();
+    const interval = setInterval(fetchSessions, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleExit = async (sessionId: number) => {
-    setExiting(sessionId)
+    setExiting(sessionId);
     try {
-      await api.post(`/parking/exit/${sessionId}`)
-      await fetchSessions()
+      const res = await api.post(`/parking/exit/${sessionId}`);
+      if (res.data.warning) {
+        alert(res.data.warning);
+      }
+      await fetchSessions();
     } catch (err: any) {
-      alert(err.response?.data?.detail ?? 'Exit failed')
+      alert(err.response?.data?.detail ?? "Exit failed");
     } finally {
-      setExiting(null)
+      setExiting(null);
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <span className="text-white/20 font-mono text-sm tracking-widest uppercase">Loading...</span>
+        <span className="text-white font-mono text-sm tracking-widest uppercase">
+          Loading...
+        </span>
       </div>
-    )
+    );
   }
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4">
-
-      {/* Header */}
       <div className="mb-10">
-        <p className="text-white/20 font-mono text-xs tracking-widest uppercase mb-3">Admin</p>
+        <p className="text-white font-mono text-xs tracking-widest uppercase mb-3">
+          Admin
+        </p>
         <div className="flex items-end justify-between">
           <div>
             <h1 className="text-white text-4xl font-light">Active Sessions</h1>
@@ -62,26 +70,25 @@ export default function ActiveSessions() {
           </div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2 h-2 bg-[#e8ff47] rounded-full animate-pulse" />
-            <span className="text-white/30 font-mono text-xs uppercase tracking-widest">
+            <span className="text-white font-mono text-xs uppercase tracking-widest">
               {sessions.length} active
             </span>
           </div>
         </div>
       </div>
 
-      {/* Refresh + nav */}
       <div className="flex gap-3 mb-6">
         <button
           onClick={fetchSessions}
           className="px-4 py-2 rounded-lg text-xs font-mono tracking-widest uppercase
-                     bg-white/5 border border-white/10 text-white/40 hover:text-white/70 transition-all"
+                     bg-white/5 border border-white/10 text-white hover:text-white/70 transition-all"
         >
           ↻ Refresh
         </button>
         <Link
           to="/admin/slots"
           className="px-4 py-2 rounded-lg text-xs font-mono tracking-widest uppercase
-                     bg-white/5 border border-white/10 text-white/40 hover:text-white/70 transition-all"
+                     bg-white/5 border border-white/10 text-white hover:text-white/70 transition-all"
         >
           View Slots
         </Link>
@@ -93,7 +100,7 @@ export default function ActiveSessions() {
         </div>
       ) : (
         <div className="space-y-3">
-          {sessions.map(session => (
+          {sessions.map((session) => (
             <div
               key={session.id}
               className="bg-white/3 border border-white/8 rounded-xl p-5"
@@ -121,32 +128,40 @@ export default function ActiveSessions() {
                     {session.user_id !== null && ` · User #${session.user_id}`}
                   </p>
                 </div>
-                <span className="text-white/20 font-mono text-xs">#{session.id}</span>
+                <span className="text-white/20 font-mono text-xs">
+                  #{session.id}
+                </span>
               </div>
 
-              {/* Time info */}
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div>
-                  <p className="text-white/20 text-[10px] font-mono uppercase tracking-widest mb-1">Entry</p>
-                  <p className="text-white/60 text-xs font-mono">{formatTime(session.entry_time)}</p>
+                  <p className="text-white/20 text-[10px] font-mono uppercase tracking-widest mb-1">
+                    Entry
+                  </p>
+                  <p className="text-white/60 text-xs font-mono">
+                    {formatTime(session.entry_time)}
+                  </p>
                 </div>
                 {session.expected_exit_time && (
                   <div>
-                    <p className="text-white/20 text-[10px] font-mono uppercase tracking-widest mb-1">Expected Exit</p>
-                    <p className="text-white/60 text-xs font-mono">{formatTime(session.expected_exit_time)}</p>
+                    <p className="text-white/20 text-[10px] font-mono uppercase tracking-widest mb-1">
+                      Expected Exit
+                    </p>
+                    <p className="text-white/60 text-xs font-mono">
+                      {formatTime(session.expected_exit_time)}
+                    </p>
                   </div>
                 )}
               </div>
 
-              {/* Actions */}
               <div className="flex gap-2">
                 <button
-                  onClick={() => navigate(`/ticket/${session.id}`)}
+                  onClick={() => navigate(`/ticket/${session.id}?from=admin`)}
                   className="text-xs font-mono tracking-widest uppercase px-4 py-2 rounded-lg
-                             bg-white/5 border border-white/10 text-white/40
+                             bg-white/5 border border-white/10 text-white
                              hover:border-white/20 hover:text-white/70 transition-all"
                 >
-                  View Ticket
+                  View Ticket 
                 </button>
                 <button
                   onClick={() => handleExit(session.id)}
@@ -157,7 +172,7 @@ export default function ActiveSessions() {
                              disabled:opacity-50 disabled:cursor-not-allowed
                              transition-all duration-150"
                 >
-                  {exiting === session.id ? 'Exiting...' : 'Force Exit'}
+                  {exiting === session.id ? "Exiting..." : "Force Exit"}
                 </button>
               </div>
             </div>
@@ -165,5 +180,5 @@ export default function ActiveSessions() {
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -27,12 +27,10 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/" element={<Navigate to="/login" replace />} />
 
-          {/* Protected — logged in users */}
           <Route element={<ProtectedRoute />}>
             <Route
               path="/dashboard"
@@ -76,7 +74,6 @@ export default function App() {
             />
           </Route>
 
-          {/* Admin only — Phase 3 coming */}
           <Route element={<AdminRoute />}>
             <Route
               path="/admin/slots"

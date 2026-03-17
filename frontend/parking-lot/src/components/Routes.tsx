@@ -1,14 +1,14 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-// Blocks unauthenticated users — redirects to /login
+// Block unauthenticated users
 export function ProtectedRoute() {
   const { user } = useAuth()
   if (!user) return <Navigate to="/login" replace />
   return <Outlet />
 }
 
-// Blocks non-admin users — redirects to /dashboard
+// Block non-admin users
 export function AdminRoute() {
   const { user } = useAuth()
   if (!user) return <Navigate to="/login" replace />

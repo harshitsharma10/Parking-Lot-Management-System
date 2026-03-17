@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
-
 from models.parking_slot_model import ParkingSlot
 from models.parking_session_model import ParkingSession
 from schemas.ParkingRequest import (
@@ -12,17 +11,16 @@ from schemas.ParkingRequest import (
 )
 from repositories import parking_repository
 from utils.billing import calculate_charge, format_duration
-from utils.enums import SlotType, SlotStatus, SessionStatus
+from utils.enums import SlotType, SlotStatus, SessionStatus, ParkingType
 
-
-# ── Slot management ───────────────────────────────────────────────────────────
+# Slot management
 
 def create_slot(db: Session, req: CreateSlotRequest):
     if parking_repository.get_slot_by_number(db, req.slot_number):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Slot {req.slot_number} already exists"
-        )
+        )   
     if req.slot_type == SlotType.QUEUE:
         if req.lane is None or req.position is None:
             raise HTTPException(
@@ -36,21 +34,32 @@ def create_slot(db: Session, req: CreateSlotRequest):
         floor=req.floor,
         lane=req.lane,
         position=req.position,
-        status=SlotStatus.AVAILABLE       # ← Enum, not string
+        status=SlotStatus.AVAILABLE     
     )
     return parking_repository.create_slot(db, slot)
 
 def get_all_slots(db: Session):
+    parking_repository.expire_overdue_queue_sessions(db) 
     return parking_repository.get_all_slots(db)
 
-
-# ── Queue entry ───────────────────────────────────────────────────────────────
+# Queue entry
 
 def queue_entry(db: Session, req: QueueEntryRequest, user_id: int):
     if req.expected_exit_time <= req.entry_time:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="expected_exit_time must be after entry_time"
+        )
+    
+    now = datetime.now(timezone.utc)
+    entry = req.entry_time
+    if entry.tzinfo is None:
+        entry = entry.replace(tzinfo=timezone.utc)
+
+    if entry < now:                          
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="entry_time cannot be in the past"
         )
 
     existing = parking_repository.get_active_session_by_vehicle(
@@ -76,10 +85,10 @@ def queue_entry(db: Session, req: QueueEntryRequest, user_id: int):
         vehicle_number=req.vehicle_number.upper(),
         vehicle_type=req.vehicle_type,
         slot_id=slot.id,
-        parking_type=SlotType.QUEUE,      # ← Enum, not string
+        parking_type=SlotType.QUEUE,    
         entry_time=req.entry_time,
         expected_exit_time=req.expected_exit_time,
-        status=SessionStatus.ACTIVE       # ← Enum, not string
+        status=SessionStatus.ACTIVE      
     )
     created = parking_repository.create_session(db, session)
 
@@ -97,8 +106,7 @@ def queue_entry(db: Session, req: QueueEntryRequest, user_id: int):
         "message": f"Assigned to Lane {slot.lane}, Position {slot.position} (front=1)"
     }
 
-
-# ── Dynamic entry ─────────────────────────────────────────────────────────────
+# Dynamic entry
 
 def dynamic_entry(db: Session, req: DynamicEntryRequest, user_id: int):
     existing = parking_repository.get_active_session_by_vehicle(
@@ -118,16 +126,16 @@ def dynamic_entry(db: Session, req: DynamicEntryRequest, user_id: int):
         )
 
     slot = random.choice(all_available)
-    parking_repository.update_slot_status(db, slot.id, SlotStatus.OCCUPIED)  # ← Enum
+    parking_repository.update_slot_status(db, slot.id, SlotStatus.OCCUPIED) 
 
     session = ParkingSession(
         user_id=user_id,
         vehicle_number=req.vehicle_number.upper(),
         vehicle_type=req.vehicle_type,
         slot_id=slot.id,
-        parking_type=SlotType.DYNAMIC,    # ← Enum, not string
+        parking_type=SlotType.DYNAMIC,    
         entry_time=datetime.now(timezone.utc),
-        status=SessionStatus.ACTIVE       # ← Enum, not string
+        status=SessionStatus.ACTIVE       
     )
     created = parking_repository.create_session(db, session)
 
@@ -141,20 +149,19 @@ def dynamic_entry(db: Session, req: DynamicEntryRequest, user_id: int):
         "status": created.status
     }
 
-
-# ── Admin walk-in ─────────────────────────────────────────────────────────────
+# Admin walk-in 
 
 def admin_walk_in(db: Session, req: AdminWalkInRequest):
     if req.slot_id:
         slot = parking_repository.get_slot_by_id(db, req.slot_id)
         if not slot:
             raise HTTPException(status_code=404, detail="Slot not found")
-        if slot.slot_type != SlotType.DYNAMIC:           # ← Enum, not string
+        if slot.slot_type != SlotType.DYNAMIC:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Walk-in slots must be from the DYNAMIC pool"
             )
-        if slot.status != SlotStatus.AVAILABLE:          # ← Enum, not string
+        if slot.status != SlotStatus.AVAILABLE:         
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"Slot {slot.slot_number} is not available"
@@ -175,9 +182,9 @@ def admin_walk_in(db: Session, req: AdminWalkInRequest):
         vehicle_number=req.vehicle_number.upper(),
         vehicle_type=req.vehicle_type,
         slot_id=slot.id,
-        parking_type=SlotType.DYNAMIC,    # ← Enum, not string
+        parking_type=SlotType.DYNAMIC,  
         entry_time=datetime.now(timezone.utc),
-        status=SessionStatus.ACTIVE       # ← Enum, not string
+        status=SessionStatus.ACTIVE       
     )
     created = parking_repository.create_session(db, session)
 
@@ -192,14 +199,13 @@ def admin_walk_in(db: Session, req: AdminWalkInRequest):
         "message": "Walk-in registered successfully"
     }
 
-
-# ── Exit & billing ────────────────────────────────────────────────────────────
+# Exit & billing
 
 def process_exit(db: Session, session_id: int):
     session = parking_repository.get_session_by_id(db, session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    if session.status == SessionStatus.COMPLETED:        # ← Enum, not string
+    if session.status == SessionStatus.COMPLETED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Session already completed"
@@ -208,13 +214,35 @@ def process_exit(db: Session, session_id: int):
     exit_time = datetime.now(timezone.utc)
     amount = calculate_charge(session.entry_time, exit_time, session.vehicle_type)
 
-    if session.parking_type == SlotType.DYNAMIC:         # ← Enum, not string
+    late_minutes = 0 
+    if session.parking_type == ParkingType.QUEUE and session.expected_exit_time:
+        expected = session.expected_exit_time
+        if expected.tzinfo is None:
+            expected = expected.replace(tzinfo=timezone.utc)
+        if exit_time.tzinfo is None:
+            exit_time_aware = exit_time.replace(tzinfo=timezone.utc)
+        else:
+            exit_time_aware = exit_time
+
+        if exit_time_aware > expected:
+            late_minutes = int((exit_time_aware - expected).total_seconds() / 60)
+
+    if session.parking_type == SlotType.DYNAMIC:
         parking_repository.update_slot_status(db, session.slot_id, SlotStatus.AVAILABLE)
 
-    return parking_repository.complete_session(db, session_id, exit_time, amount)
+    completed = parking_repository.complete_session(db, session_id, exit_time, amount)
 
+    response = {
+        "session_id": completed.id,
+        "status": completed.status,
+        "amount_charged": completed.amount_charged,
+    }
+    if late_minutes > 0:
+        response["warning"] = f"Late exit by {late_minutes} minutes. Next booking may be affected."
 
-# ── Ticket ────────────────────────────────────────────────────────────────────
+    return response
+
+# Ticket 
 
 def get_ticket(db: Session, session_id: int) -> TicketResponse:
     session = parking_repository.get_session_by_id(db, session_id)
@@ -225,9 +253,23 @@ def get_ticket(db: Session, session_id: int) -> TicketResponse:
 
     duration_str = None
     if session.actual_exit_time:
+        # Completed — use actual entry → exit duration
         duration_str = format_duration(session.entry_time, session.actual_exit_time)
-    elif session.status == SessionStatus.ACTIVE:         # ← Enum, not string
-        duration_str = format_duration(session.entry_time, datetime.now(timezone.utc))
+    elif session.status == SessionStatus.ACTIVE:
+        if session.parking_type == ParkingType.QUEUE:
+            # Queue — show booked window (entry → expected_exit)
+            if session.expected_exit_time:
+                duration_str = format_duration(session.entry_time, session.expected_exit_time)
+        else:
+            # Dynamic — show elapsed time since entry
+            now = datetime.now(timezone.utc)
+            entry = session.entry_time
+            if entry.tzinfo is None:
+                entry = entry.replace(tzinfo=timezone.utc)
+            if now >= entry:
+                duration_str = format_duration(entry, now)
+            else:
+                duration_str = "Not started yet"
 
     return TicketResponse(
         ticket_id=f"TKT-{session.id:05d}",
@@ -246,8 +288,7 @@ def get_ticket(db: Session, session_id: int) -> TicketResponse:
         status=session.status
     )
 
-
-# ── Session helpers ───────────────────────────────────────────────────────────
+# Session helpers
 
 def get_my_sessions(db: Session, user_id: int):
     return parking_repository.get_sessions_by_user(db, user_id)

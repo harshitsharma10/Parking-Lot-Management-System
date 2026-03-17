@@ -1,26 +1,30 @@
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
+from utils.billing import calculate_charge
+from utils.enums import ParkingType
 from models.parking_slot_model import ParkingSlot, SlotStatus, SlotType
 from models.parking_session_model import ParkingSession, SessionStatus
 
 BUFFER_MINUTES = 15
 
 
-# ── Slot queries ──────────────────────────────────────────────────────────────
+# Slot queries
 
 def get_all_slots(db: Session):
     slots = db.query(ParkingSlot).all()
+    now = datetime.now(timezone.utc)
 
     result = []
     for slot in slots:
         if slot.slot_type == SlotType.QUEUE:
-            # Show OCCUPIED if any ACTIVE session exists on this slot (no time window check)
             active = (
                 db.query(ParkingSession)
                 .filter(
                     ParkingSession.slot_id == slot.id,
                     ParkingSession.status == SessionStatus.ACTIVE,
+                    ParkingSession.entry_time <= now,        
+                    ParkingSession.expected_exit_time >= now 
                 )
                 .first()
             )
@@ -66,8 +70,7 @@ def update_slot_status(db: Session, slot_id: int, status: SlotStatus):
     return slot
 
 
-# ── Queue: lane-based slot allocation ────────────────────────────────────────
-#
+# Queue: lane-based slot allocation
 # Rules:
 #  1. Within a lane, exit times must be non-decreasing front → back
 #  2. New car joins a lane only if its exit_time >= exit_time of all cars ahead
@@ -95,13 +98,12 @@ def find_available_queue_slot(db: Session, entry_time: datetime, expected_exit_t
         .all()
     )
 
-    # Group by lane
     lanes = {}
     for slot in all_queue_slots:
         lanes.setdefault(slot.lane, []).append(slot)
 
-    valid_candidates = []   # (empty_count, slot) — from partially filled lanes
-    empty_lane_slot = None  # fallback — front of a completely empty lane
+    valid_candidates = []  
+    empty_lane_slot = None 
 
     for lane_num, slots_in_lane in sorted(lanes.items()):
 
@@ -111,12 +113,10 @@ def find_available_queue_slot(db: Session, entry_time: datetime, expected_exit_t
         )
 
         if not lane_has_any_occupied:
-            # Entire lane is empty — save as fallback only, prefer filling existing lanes first
             if empty_lane_slot is None:
-                empty_lane_slot = slots_in_lane[0]  # position=1, front of lane
-            continue  # skip for now, come back only if no partial lane works
+                empty_lane_slot = slots_in_lane[0]  
+            continue  
 
-        # Lane is partially filled — find first empty slot front → back
         next_empty = None
         for slot in slots_in_lane:
             if not _slot_has_conflict(db, slot.id, entry_time, expected_exit_time):
@@ -124,9 +124,8 @@ def find_available_queue_slot(db: Session, entry_time: datetime, expected_exit_t
                 break
 
         if next_empty is None:
-            continue  # lane fully occupied for this window
+            continue  
 
-        # Check exit-time constraint: every car in front must exit <= new car's exit
         front_slots = [s for s in slots_in_lane if s.position < next_empty.position]
         constraint_ok = True
         for fs in front_slots:
@@ -146,7 +145,6 @@ def find_available_queue_slot(db: Session, entry_time: datetime, expected_exit_t
         if not constraint_ok:
             continue
 
-        # Count empty slots in lane (prefer fuller lanes — tighter packing)
         occupied = sum(
             1 for s in slots_in_lane
             if _slot_has_conflict(db, s.id, entry_time, expected_exit_time)
@@ -155,15 +153,13 @@ def find_available_queue_slot(db: Session, entry_time: datetime, expected_exit_t
         valid_candidates.append((empty_count, next_empty))
 
     if valid_candidates:
-        # Pick the lane with fewest empty slots (tightest packing)
         valid_candidates.sort(key=lambda x: x[0])
         return valid_candidates[0][1]
 
-    # No partially filled lane works — open a fresh empty lane
-    return empty_lane_slot  # None if truly all slots are full
+    return empty_lane_slot  
 
 
-# ── Dynamic slot allocation ───────────────────────────────────────────────────
+# Dynamic slot allocation
 
 def find_all_available_dynamic_slots(db: Session):
     return (
@@ -175,8 +171,38 @@ def find_all_available_dynamic_slots(db: Session):
         .all()
     )
 
+def expire_overdue_queue_sessions(db: Session):
+    """
+    Auto-complete queue sessions where expected_exit_time has passed
+    and user never called exit. Charge based on expected duration.
+    """
+    now = datetime.now(timezone.utc)
+    overdue = (
+        db.query(ParkingSession)
+        .filter(
+            ParkingSession.parking_type == ParkingType.QUEUE,
+            ParkingSession.status == SessionStatus.ACTIVE,
+            ParkingSession.expected_exit_time < now,
+        )
+        .all()
+    )
 
-# ── Session queries ───────────────────────────────────────────────────────────
+    for session in overdue:
+        amount = calculate_charge(
+            session.entry_time,
+            session.expected_exit_time,  
+            session.vehicle_type
+        )
+        session.actual_exit_time = session.expected_exit_time
+        session.amount_charged = amount
+        session.status = SessionStatus.COMPLETED
+
+    if overdue:
+        db.commit()
+
+    return len(overdue)
+
+# Session queries
 
 def create_session(db: Session, session: ParkingSession):
     db.add(session)

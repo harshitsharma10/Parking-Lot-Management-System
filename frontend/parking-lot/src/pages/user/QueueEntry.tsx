@@ -19,6 +19,19 @@ export default function QueueEntry() {
     e.preventDefault()
     setError('')
 
+    const now = new Date()
+    const entry = new Date(form.entry_time)
+    const exit = new Date(form.expected_exit_time)
+
+    if (entry < now) {
+      setError('Entry time cannot be in the past')
+      return
+    }
+    if (exit <= entry) {
+      setError('Exit time must be after entry time')
+      return
+    }
+
     if (new Date(form.expected_exit_time) <= new Date(form.entry_time)) {
       setError('Exit time must be after entry time')
       return
@@ -44,10 +57,10 @@ export default function QueueEntry() {
     <div className="max-w-md mx-auto py-12 px-4">
 
       <div className="mb-10">
-        <Link to="/dashboard" className="text-white/20 hover:text-white/50 font-mono text-xs tracking-widest uppercase transition-colors">
+        <Link to="/dashboard" className="text-white hover:text-white/50 font-mono text-xs tracking-widest uppercase transition-colors">
           ← Back
         </Link>
-        <p className="text-white/20 font-mono text-xs tracking-widest uppercase mt-6 mb-3">
+        <p className="text-white font-mono text-xs tracking-widest uppercase mt-6 mb-3">
           Lane-based reservation
         </p>
         <h1 className="text-white text-4xl font-light">Queue Entry</h1>
@@ -56,9 +69,8 @@ export default function QueueEntry() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
 
-        {/* Vehicle number */}
         <div>
-          <label className="block text-white/40 text-xs font-mono tracking-widest uppercase mb-2">
+          <label className="block text-white text-xs font-mono tracking-widest uppercase mb-2">
             Vehicle Number
           </label>
           <input
@@ -73,9 +85,8 @@ export default function QueueEntry() {
           />
         </div>
 
-        {/* Vehicle type */}
         <div>
-          <label className="block text-white/40 text-xs font-mono tracking-widest uppercase mb-3">
+          <label className="block text-white text-xs font-mono tracking-widest uppercase mb-3">
             Vehicle Type
           </label>
           <div className="grid grid-cols-3 gap-2">
@@ -87,7 +98,7 @@ export default function QueueEntry() {
                 className={`py-3 rounded-lg text-xs font-mono tracking-widest uppercase transition-all
                   ${form.vehicle_type === type
                     ? 'bg-[#e8ff47] text-[#0f0f0f] font-bold'
-                    : 'bg-white/5 border border-white/10 text-white/40 hover:border-white/20 hover:text-white/70'
+                    : 'bg-white/5 border border-white/10 text-white hover:border-white/20 hover:text-white/70'
                   }`}
               >
                 {type}
@@ -96,9 +107,8 @@ export default function QueueEntry() {
           </div>
         </div>
 
-        {/* Entry time */}
         <div>
-          <label className="block text-white/40 text-xs font-mono tracking-widest uppercase mb-2">
+          <label className="block text-white text-xs font-mono tracking-widest uppercase mb-2">
             Entry Time
           </label>
           <input
@@ -112,9 +122,8 @@ export default function QueueEntry() {
           />
         </div>
 
-        {/* Exit time */}
         <div>
-          <label className="block text-white/40 text-xs font-mono tracking-widest uppercase mb-2">
+          <label className="block text-white text-xs font-mono tracking-widest uppercase mb-2">
             Expected Exit Time
           </label>
           <input
@@ -128,10 +137,9 @@ export default function QueueEntry() {
           />
         </div>
 
-        {/* Info note */}
         <div className="flex gap-3 bg-white/3 border border-white/8 rounded-lg px-4 py-3">
           <span className="w-1 h-1 bg-[#e8ff47] rounded-full mt-1.5 shrink-0" />
-          <p className="text-white/30 text-xs font-mono leading-relaxed">
+          <p className="text-white text-xs font-mono leading-relaxed">
             A 15-min buffer is enforced between sessions. Slot is assigned based on your exit time to prevent lane blockage.
           </p>
         </div>

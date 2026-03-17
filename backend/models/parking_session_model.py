@@ -1,21 +1,8 @@
 from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey, Enum
 from sqlalchemy.sql import func
 from database import Base
-import enum
 from sqlalchemy.orm import relationship
-
-class VehicleType(str, enum.Enum):
-    CAR = "CAR"
-    BIKE = "BIKE"
-    TRUCK = "TRUCK"
-
-class ParkingType(str, enum.Enum):
-    QUEUE = "QUEUE"
-    DYNAMIC = "DYNAMIC"
-
-class SessionStatus(str, enum.Enum):
-    ACTIVE = "ACTIVE"
-    COMPLETED = "COMPLETED"
+from utils.enums import VehicleType, ParkingType, SessionStatus
 
 class ParkingSession(Base):
     __tablename__ = "parking_sessions"

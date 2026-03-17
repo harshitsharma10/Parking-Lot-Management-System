@@ -3,14 +3,14 @@ from datetime import datetime
 from typing import Optional
 from utils.enums import SlotType, VehicleType
 
-# ── Slot schemas ──────────────────────────────────────────────────────────────
+# Slot schemas
 
 class CreateSlotRequest(BaseModel):
     slot_number: str
     slot_type: SlotType
     floor: str = "G"
-    lane: Optional[int] = None        # for QUEUE slots
-    position: Optional[int] = None    # for QUEUE slots (1=front, 2=middle...)
+    lane: Optional[int] = None        
+    position: Optional[int] = None    
 
 class SlotResponse(BaseModel):
     id: int
@@ -24,7 +24,7 @@ class SlotResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# ── Entry schemas ─────────────────────────────────────────────────────────────
+# Entry schemas
 
 class QueueEntryRequest(BaseModel):
     vehicle_number: str = Field(min_length=3)
@@ -41,7 +41,7 @@ class AdminWalkInRequest(BaseModel):
     vehicle_type: VehicleType
     slot_id: Optional[int] = None
 
-# ── Ticket / session response ─────────────────────────────────────────────────
+# Ticket / session response
 
 class TicketResponse(BaseModel):
     ticket_id: str
